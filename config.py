@@ -8,12 +8,16 @@ GROQ_API_KEY = os.getenv("GROQ_API_KEY", "")
 GROQ_MODEL = "llama-3.3-70b-versatile"
 
 # ── File storage ───────────────────────────────────────────────────────────────
-UPLOAD_FOLDER = os.path.join(os.path.dirname(__file__), "uploads")
-ALLOWED_EXTENSIONS = {"pdf", "docx", "txt"}
-MAX_CONTENT_LENGTH = 16 * 1024 * 1024  # 16 MB per file
+# Vercel serverless: filesystem is read-only except /tmp.
+_IS_VERCEL = bool(os.getenv("VERCEL"))
+_BASE_DIR   = "/tmp" if _IS_VERCEL else os.path.dirname(__file__)
+
+UPLOAD_FOLDER       = os.path.join(_BASE_DIR, "uploads")
+ALLOWED_EXTENSIONS  = {"pdf", "docx", "txt"}
+MAX_CONTENT_LENGTH  = 16 * 1024 * 1024  # 16 MB per file
 
 # ── Database ───────────────────────────────────────────────────────────────────
-DATABASE_PATH = os.path.join(os.path.dirname(__file__), "resume_screening.db")
+DATABASE_PATH = os.path.join(_BASE_DIR, "resume_screening.db")
 
 # ── Experience score weights (must sum to 1.0) ─────────────────────────────────
 WEIGHT_YEARS      = 0.50

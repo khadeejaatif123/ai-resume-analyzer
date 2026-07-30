@@ -16,10 +16,27 @@ import ranker
 # ── App setup ──────────────────────────────────────────────────────────────────
 app = Flask(__name__)
 app.config["MAX_CONTENT_LENGTH"] = config.MAX_CONTENT_LENGTH
-os.makedirs(config.UPLOAD_FOLDER, exist_ok=True)
 
-# Background thread pool
-_executor = ThreadPoolExecutor(max_workers=config.WORKER_THREADS)
+# Lazily created so they don’t execute at import time (Vercel serverless)
+_executor  = None
+_db_ready  = False
+
+def _ensure_ready():
+    """Idempotent: create upload dir, init DB, and start thread pool once per process."""
+    global _executor, _db_ready
+    # Upload folder must exist before any file.save() call.
+    # /tmp is writable on Vercel; local path is writable in dev.
+    os.makedirs(config.UPLOAD_FOLDER, exist_ok=True)
+    if not _db_ready:
+        db.init_db()
+        _db_ready = True
+    if _executor is None:
+        _executor = ThreadPoolExecutor(max_workers=config.WORKER_THREADS)
+
+@app.before_request
+def before_request():
+    _ensure_ready()
+
 
 # ── Helpers ────────────────────────────────────────────────────────────────────
 
@@ -217,7 +234,7 @@ def export_role_csv(role_key):
 # ── Entry point ────────────────────────────────────────────────────────────────
 
 if __name__ == "__main__":
-    db.init_db()
+    _ensure_ready()
     print("=" * 60)
     print("  AI Resume Screening System")
     print("  http://127.0.0.1:5000")
