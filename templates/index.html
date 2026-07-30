@@ -1,0 +1,127 @@
+{% extends "base.html" %}
+{% block title %}RecruitAI — Dashboard{% endblock %}
+
+{% block content %}
+<div class="dashboard-layout">
+
+  <!-- ── Sidebar: Role Tabs ─────────────────────────────────────── -->
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-header">
+      <h2 class="sidebar-title">Role Buckets</h2>
+      <span class="candidate-total" id="totalCount">0 candidates</span>
+    </div>
+    <nav class="role-tabs" id="roleTabs">
+      <button class="role-tab active" data-role="all" id="tab-all">
+        <span class="role-name">All Candidates</span>
+        <span class="role-badge" id="badge-all">0</span>
+      </button>
+      {% for role in taxonomy %}
+      {% if role.role_key != 'unclassified' %}
+      <button class="role-tab" data-role="{{ role.role_key }}" id="tab-{{ role.role_key }}">
+        <span class="role-name">{{ role.display_name }}</span>
+        <span class="role-badge" id="badge-{{ role.role_key }}">0</span>
+      </button>
+      {% endif %}
+      {% endfor %}
+      <button class="role-tab role-tab--unclassified" data-role="unclassified" id="tab-unclassified">
+        <span class="role-name">⚠ Unclassified</span>
+        <span class="role-badge" id="badge-unclassified">0</span>
+      </button>
+    </nav>
+  </aside>
+
+  <!-- ── Main Panel ─────────────────────────────────────────────── -->
+  <div class="main-panel">
+
+    <!-- Upload Panel -->
+    <section class="upload-section" id="uploadSection">
+      <div class="upload-zone" id="dropZone">
+        <div class="upload-icon">
+          <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+            <polyline points="16 16 12 12 8 16"/>
+            <line x1="12" y1="12" x2="12" y2="21"/>
+            <path d="M20.39 18.39A5 5 0 0 0 18 9h-1.26A8 8 0 1 0 3 16.3"/>
+          </svg>
+        </div>
+        <p class="upload-title">Drop resumes here or <label for="fileInput" class="upload-browse">browse</label></p>
+        <p class="upload-subtitle">Supports PDF, DOCX, TXT &mdash; multiple files at once</p>
+        <input type="file" id="fileInput" multiple accept=".pdf,.docx,.txt" style="display:none" />
+      </div>
+
+      <!-- Upload Queue -->
+      <div class="upload-queue" id="uploadQueue" style="display:none">
+        <div class="queue-header">
+          <h3 class="queue-title">Upload Queue</h3>
+          <button class="btn-clear" id="clearQueue">Clear completed</button>
+        </div>
+        <ul class="queue-list" id="queueList"></ul>
+      </div>
+    </section>
+
+    <!-- Dashboard Header -->
+    <section class="dashboard-header">
+      <div class="dashboard-header-left">
+        <h1 class="dashboard-title" id="dashboardTitle">All Candidates</h1>
+        <p class="dashboard-subtitle" id="dashboardSubtitle">Ranked by experience score &middot; FCFS tie-breaking</p>
+      </div>
+      <div class="dashboard-header-right">
+        <button class="btn-export" id="exportBtn" style="display:none" onclick="exportCSV()">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+            <polyline points="7 10 12 15 17 10"/>
+            <line x1="12" y1="15" x2="12" y2="3"/>
+          </svg>
+          Export CSV
+        </button>
+      </div>
+    </section>
+
+    <!-- Status Summary Bar -->
+    <div class="status-bar" id="statusBar" style="display:none">
+      <span class="status-pill status-queued" id="statusQueued">0 queued</span>
+      <span class="status-pill status-processing" id="statusProcessing">0 processing</span>
+      <span class="status-pill status-complete" id="statusComplete">0 complete</span>
+      <span class="status-pill status-failed" id="statusFailed">0 failed</span>
+    </div>
+
+    <!-- Candidate Table -->
+    <div class="table-container">
+      <table class="candidates-table" id="candidatesTable">
+        <thead>
+          <tr>
+            <th class="col-rank">#</th>
+            <th class="col-name">Candidate</th>
+            <th class="col-role">Role</th>
+            <th class="col-score">Exp Score</th>
+            <th class="col-overall">Score</th>
+            <th class="col-seniority">Level</th>
+            <th class="col-years">Years</th>
+            <th class="col-queue">Queue</th>
+            <th class="col-time">Uploaded</th>
+            <th class="col-action"></th>
+          </tr>
+        </thead>
+        <tbody id="candidatesBody">
+          <tr class="empty-row" id="emptyRow">
+            <td colspan="10">
+              <div class="empty-state">
+                <div class="empty-icon">📄</div>
+                <p>No candidates yet — upload resumes above to get started.</p>
+              </div>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+  </div><!-- /.main-panel -->
+</div><!-- /.dashboard-layout -->
+{% endblock %}
+
+{% block scripts %}
+<script>
+  // Pass role taxonomy to JS
+  const ROLE_TAXONOMY = {{ taxonomy | tojson }};
+</script>
+<script src="{{ url_for('static', filename='js/app.js') }}"></script>
+{% endblock %}

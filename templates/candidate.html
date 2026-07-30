@@ -1,0 +1,195 @@
+{% extends "base.html" %}
+{% block title %}{{ candidate.candidate_name or candidate.original_filename }} — RecruitAI{% endblock %}
+
+{% block content %}
+<div class="detail-layout">
+
+  <!-- Back nav -->
+  <div class="back-nav">
+    <a href="/" class="back-link">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <polyline points="15 18 9 12 15 6"/>
+      </svg>
+      Back to Dashboard
+    </a>
+  </div>
+
+  <div class="detail-grid">
+
+    <!-- ── Left Column: Identity + Scores ──────────────────── -->
+    <div class="detail-left">
+
+      <!-- Candidate Card -->
+      <div class="card candidate-card">
+        <div class="candidate-avatar">
+          {{ (candidate.candidate_name or 'U')[0].upper() }}
+        </div>
+        <div class="candidate-info">
+          <h1 class="candidate-name">{{ candidate.candidate_name or 'Unknown Candidate' }}</h1>
+          <p class="candidate-file">{{ candidate.original_filename }}</p>
+          <div class="candidate-meta">
+            <span class="meta-badge meta-badge--{{ candidate.seniority_level or 'junior' }}">
+              {{ (candidate.seniority_level or 'junior') | title }}
+            </span>
+            <span class="meta-badge meta-badge--neutral">
+              {{ candidate.total_years_experience or 0 }} yrs exp
+            </span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Score Gauges -->
+      <div class="card scores-card">
+        <h2 class="card-title">Scores</h2>
+        <div class="score-row">
+          <div class="score-item">
+            <div class="score-stamp score-stamp--primary">
+              <span class="score-number">{{ candidate.overall_score or 0 }}</span>
+              <span class="score-label">Overall</span>
+            </div>
+          </div>
+          <div class="score-item">
+            <div class="score-stamp score-stamp--exp">
+              <span class="score-number">{{ "%.2f"|format(candidate.experience_score or 0) }}</span>
+              <span class="score-label">Exp Score</span>
+            </div>
+          </div>
+          <div class="score-item">
+            <div class="score-stamp score-stamp--fit">
+              <span class="score-number">{{ candidate.primary_role_confidence | int }}%</span>
+              <span class="score-label">Role Fit</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Queue & Timestamp -->
+      <div class="card meta-card">
+        <h2 class="card-title">Queue Info</h2>
+        <div class="meta-row">
+          <span class="meta-key">Queue Position</span>
+          <span class="meta-val queue-pos">#{{ candidate.queue_position }}</span>
+        </div>
+        <div class="meta-row">
+          <span class="meta-key">Uploaded At</span>
+          <span class="meta-val timestamp">{{ candidate.uploaded_at }}</span>
+        </div>
+        <div class="meta-row">
+          <span class="meta-key">Status</span>
+          <span class="meta-val">
+            <span class="status-dot status-dot--{{ candidate.analysis_status }}"></span>
+            {{ candidate.analysis_status | title }}
+          </span>
+        </div>
+        <div class="meta-row">
+          <span class="meta-key">Education</span>
+          <span class="meta-val">{{ analysis.education_level or '—' }}</span>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- ── Right Column: Analysis ───────────────────────────── -->
+    <div class="detail-right">
+
+      <!-- Primary Role -->
+      <div class="card role-card">
+        <h2 class="card-title">Role Classification</h2>
+        <div class="primary-role">
+          <div class="primary-role-label">Primary Match</div>
+          <div class="primary-role-name">{{ candidate.primary_role }}</div>
+          <div class="confidence-bar-wrap">
+            <div class="confidence-bar" style="width: {{ candidate.primary_role_confidence | int }}%"></div>
+          </div>
+          <div class="confidence-pct">{{ candidate.primary_role_confidence | int }}% confidence</div>
+        </div>
+
+        {% if candidate.role_fits | length > 1 %}
+        <div class="secondary-roles">
+          <h3 class="secondary-title">Secondary Fits</h3>
+          {% for rf in candidate.role_fits %}
+          {% if rf.role != candidate.primary_role %}
+          <div class="role-fit-row">
+            <span class="fit-role">{{ rf.role }}</span>
+            <div class="fit-bar-wrap">
+              <div class="fit-bar" style="width: {{ rf.confidence }}%"></div>
+            </div>
+            <span class="fit-pct">{{ rf.confidence }}%</span>
+          </div>
+          {% if rf.reasoning %}
+          <p class="fit-reasoning">{{ rf.reasoning }}</p>
+          {% endif %}
+          {% endif %}
+          {% endfor %}
+        </div>
+        {% endif %}
+      </div>
+
+      <!-- Summary -->
+      {% if analysis.summary %}
+      <div class="card summary-card">
+        <h2 class="card-title">Summary</h2>
+        <p class="summary-text">{{ analysis.summary }}</p>
+      </div>
+      {% endif %}
+
+      <!-- Skills + Titles -->
+      <div class="card skills-card">
+        <div class="skills-grid">
+          {% if analysis.primary_skills %}
+          <div>
+            <h2 class="card-title">Primary Skills</h2>
+            <div class="skill-chips">
+              {% for skill in analysis.primary_skills %}
+              <span class="skill-chip">{{ skill }}</span>
+              {% endfor %}
+            </div>
+          </div>
+          {% endif %}
+          {% if analysis.past_titles %}
+          <div>
+            <h2 class="card-title">Past Titles</h2>
+            <ul class="titles-list">
+              {% for title in analysis.past_titles %}
+              <li>{{ title }}</li>
+              {% endfor %}
+            </ul>
+          </div>
+          {% endif %}
+        </div>
+      </div>
+
+      <!-- Strengths + Weaknesses -->
+      <div class="card sw-card">
+        <div class="sw-grid">
+          {% if analysis.strengths %}
+          <div class="sw-col sw-col--strengths">
+            <h2 class="card-title">
+              <span class="sw-icon">✓</span> Strengths
+            </h2>
+            <ul class="sw-list">
+              {% for s in analysis.strengths %}
+              <li>{{ s }}</li>
+              {% endfor %}
+            </ul>
+          </div>
+          {% endif %}
+          {% if analysis.weaknesses %}
+          <div class="sw-col sw-col--weaknesses">
+            <h2 class="card-title">
+              <span class="sw-icon">△</span> Areas to Improve
+            </h2>
+            <ul class="sw-list">
+              {% for w in analysis.weaknesses %}
+              <li>{{ w }}</li>
+              {% endfor %}
+            </ul>
+          </div>
+          {% endif %}
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+{% endblock %}
